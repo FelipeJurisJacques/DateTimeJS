@@ -10,6 +10,7 @@ Compatibility with HTML 5 inputs;
 ES6 Guetter and Setter methods with a single representative acronym;
 Integer or textual values with 0 to the left;
 
+
 -> Português
 
 Manipular data e hora com Java Script nunca foi tão fácil
