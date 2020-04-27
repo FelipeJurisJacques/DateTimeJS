@@ -537,7 +537,7 @@ class DateTimeClass {
 /**
  * local DateTimeClass
  */
-/*export*/ class DateTime extends DateTimeClass {
+export class DateTime extends DateTimeClass {
 
     set y(n) {
         if (!isNaN(n) && n != null && this.dt) {
@@ -684,7 +684,7 @@ class DateTimeClass {
 /**
  * global DateTimeClass
  */
-/*export*/ class DateTimeUTC extends DateTimeClass {
+export class DateTimeUTC extends DateTimeClass {
 
     set y(n) {
         if (!isNaN(n) && n != null && this.dt) {
