@@ -16,15 +16,15 @@ class DateTimeClass {
         try {
             if (Array.isArray(date)) {
                 if (date.length == 1) {
-                    if (date[0] != null) {
+                    if (date[0] !== null) {
                         if (!isNaN(date[0])) {
                             this.dt = new Date(date[0]) // string or int to diferent results (original Date)
                         }
-                        else if (typeof date[0] == 'object' && date[0] != null) {
-                            if (date[0].constructor.name == 'DateTime') {
+                        else if (typeof date[0] === 'object' && date[0] !== null) {
+                            if (date[0].constructor.name === 'DateTime') {
                                 this.dt = new Date(date[0].dt) // duplicate object
                             }
-                            else if (date[0].constructor.name == 'Date') {
+                            else if (date[0].constructor.name === 'Date') {
                                 this.dt = new Date(date[0]) // duplicate object
                             }
                         }
@@ -84,14 +84,20 @@ class DateTimeClass {
                 this.date = e[0]
                 this.time = e[1]
             }
-            else if (date.search('T') == 10) {
-                const e = date.split('T')
-                this.date = e[0]
-                this.time = e[1]
+            else if (date.search('T') == 10) { // ISO 8601
+                this.dt = new Date()
+                this.dt.setUTCFullYear(date.slice(0, 4))
+                this.dt.setUTCMonth(date.slice(5, 7) - 1)
+                this.dt.setUTCDate(date.slice(8, 10))
+                this.dt.setUTCHours(date.slice(11, 13))
+                this.dt.setUTCMinutes(date.slice(14, 16))
+                this.dt.setUTCSeconds(date.slice(17, 19))
             }
-            else {
-                this.date = date[0]
-                this.time = date[1]
+            else if (date.search('-') === 4) {
+                this.date = date
+            }
+            else if (date.search(':') === 2) {
+                this.time = date
             }
         }
     }
@@ -131,8 +137,8 @@ class DateTimeClass {
             const d = date.split('-')
             if (d.length == 3) {
                 if (d.length == 3) {
-                    this._inith()
                     if (!isNaN(d[0]) && !isNaN(d[1]) && !isNaN(d[2])) {
+                        this._inith()
                         this.y = d[0]
                         this.m = d[1]
                         this.d = d[2]
@@ -154,13 +160,13 @@ class DateTimeClass {
     }
 
     set time(time) {
-        if (typeof time == 'string') { // SQL phpMyAdmin or input
+        if (typeof time === 'string') { // SQL phpMyAdmin or input
             const t = time.split(':')
-            this._inith()
-            if (t.length == 3) {
+            if (t.length === 3) {
                 if (!isNaN(t[0]) && !isNaN(t[1]) && !isNaN(t[2])) {
-                    this.h = t[0]
-                    this.i = t[1]
+                    this._inith()
+                    this.h = parseInt(t[0])
+                    this.i = parseInt(t[1])
                     if (t[2].search('.') != -1) {
                         this.s = t[2]
                     }
@@ -170,10 +176,11 @@ class DateTimeClass {
                     }
                 }
             }
-            else if (t.length == 2) {
+            else if (t.length === 2) {
                 if (!isNaN(t[0]) && !isNaN(t[1])) {
-                    this.h = t[0]
-                    this.i = t[1]
+                    this._inith()
+                    this.h = parseInt(t[0])
+                    this.i = parseInt(t[1])
                 }
             }
         }
@@ -231,7 +238,7 @@ class DateTimeClass {
     get month() {
         const m = this.m
         if (m) {
-            return DateNames.translate(this.lang).monthName[m]
+            return DateNames.translate(this.lang).monthName[m - 1]
         }
         return ''
     }
@@ -243,7 +250,7 @@ class DateTimeClass {
     get mon() {
         const m = this.m
         if (m) {
-            return DateNames.translate(this.lang).monthInitials[m]
+            return DateNames.translate(this.lang).monthInitials[m - 1]
         }
         return ''
     }
@@ -387,7 +394,12 @@ class DateTimeClass {
 
     get timeBig() {
         if (this.dt) {
-            return `${this.h}h${this.i}min`
+            if (this.i > 0) {
+                return `${this.h}h${this.i}min`
+            }
+            else {
+                return `${this.h}h`
+            }
         }
         return undefined
     }
@@ -406,7 +418,7 @@ class DateTimeClass {
         return undefined
     }
 
-    get DateTimeClassFull() {
+    get dateTimeFull() {
         const d = this.dateFull
         const t = this.timeBig
         if (d && t) {
@@ -415,7 +427,7 @@ class DateTimeClass {
         return undefined
     }
 
-    get DateTimeClassLong() {
+    get dateTimeLong() {
         const d = this.dateLong
         const t = this.timeBig
         if (d && t) {
@@ -424,7 +436,7 @@ class DateTimeClass {
         return undefined
     }
 
-    get DateTimeClassSmall() {
+    get dateTimeSmall() {
         const d = this.dateSmall
         const t = this.timeSmall
         if (d && t) {
@@ -442,7 +454,7 @@ class DateTimeClass {
             if (input.type) {
                 let v = ''
                 if (input.type == 'DateTimeClass-local') {
-                    v = this.toInputDateTimeClassLocal()
+                    v = this.toInputDateTimeLocal()
                 }
                 else if (input.type == 'date') {
                     v = this.toInputDate()
@@ -460,11 +472,12 @@ class DateTimeClass {
         return this.date
     }
 
-    toInputDateTimeClassLocal() {
+    toInputDateTimeLocal() {
         const d = this.date
-        const t = this.time
-        if (d && t) {
-            return `${d}T${t}`
+        const h = this.H
+        const i = this.I
+        if (d && h && i) {
+            return `${d}T${h}:${i}`
         }
         return ''
     }
@@ -488,6 +501,10 @@ class DateTimeClass {
             return this.dt.toString()
         }
         return ''
+    }
+
+    toObject() {
+        return this.dt
     }
 
     _inith() {
@@ -532,6 +549,82 @@ class DateTimeClass {
         }
         return NaN
     }
+
+    interval(date) {
+        let d = null
+        if (typeof date == 'object' && date != null) {
+            if (date.constructor.name == 'Date') {
+                d = date
+            }
+            else if (date.constructor.name == 'DateTime') {
+                d = date.dt
+            }
+        }
+        if (d !== null && this.dt !== null) {
+            const i = Math.abs(d.getTime() - this.dt.getTime())
+            const r = {}
+            r.s = Math.abs(i / 1000)
+            r.i = Math.floor(r.s / 60)
+            r.h = Math.floor(r.i / 60)
+            r.d = Math.floor(r.h / 24)
+            r.w = Math.floor(r.d / 7)
+            r.m = Math.abs(Math.floor((d.getMonth() + 12 * d.getFullYear()) - (this.dt.getMonth() + 12 * this.dt.getFullYear())))
+            r.y = Math.floor(Math.ceil(i / 86400000) / 365.25)
+            return r
+        }
+        return null
+    }
+
+    /**
+     * diferencas de dias pode nao ser exatos por conta dos meses diferentes
+     * @param {*} date 
+     */
+    diff(date) {
+        let d = null
+        if (typeof date == 'object' && date != null) {
+            if (date.constructor.name == 'Date') {
+                d = date
+            }
+            else if (date.constructor.name == 'DateTime') {
+                d = date.dt
+            }
+        }
+        if (d !== null && this.dt !== null) {
+            const i = Math.abs(d.getTime() - this.dt.getTime())
+            const r = {}
+            r.y = Math.floor(Math.ceil(i / 86400000) / 365.25)
+            r.m = Math.abs(Math.floor((d.getMonth() + 12 * d.getFullYear()) - (this.dt.getMonth() + 12 * this.dt.getFullYear())) - (r.y * 12))
+            r.s = Math.abs((i / 1000))
+            r.i = r.s / 60
+            r.h = r.i / 60
+            r.d = r.h / 24
+            r.w = r.d / 7
+            if (r.s >= 60) {
+                r.s -= Math.floor(r.s / 60) * 60
+            }
+            if (r.i >= 60) {
+                r.i -= Math.floor(r.i / 60) * 60
+            }
+            if (r.h >= 24) {
+                r.h -= Math.floor(r.h / 24) * 24
+            }
+            if (r.w > 4) {
+                r.w -= Math.floor(r.w / 4) * 4
+            }
+            if (r.m >= 12) {
+                r.m -= Math.floor(r.m / 12) * 12
+            }
+            if (r.d >= 30) {
+                r.d -= Math.floor(r.d / 30) * 30
+            }
+            r.i = Math.floor(r.i)
+            r.h = Math.floor(r.h)
+            r.d = Math.floor(r.d)
+            r.w = Math.floor(r.w)
+            return r
+        }
+        return null
+    }
 }
 
 /**
@@ -555,6 +648,10 @@ export class DateTime extends DateTimeClass {
             return this.dt.getFullYear()
         }
         return NaN
+    }
+
+    get Y() {
+        return this.y
     }
 
     /**
@@ -702,6 +799,10 @@ export class DateTimeUTC extends DateTimeClass {
             return this.dt.getUTCFullYear()
         }
         return NaN
+    }
+
+    get Y() {
+        return this.y
     }
 
     /**
@@ -938,24 +1039,24 @@ class DateNames {
             static get monthName() {
                 return [
                     "Janvier",
-                    "Février",
+                    "FÃ©vrier",
                     "Mars",
                     "Avril",
                     "Mai",
                     "Juin",
                     "Juillet",
-                    "Août",
+                    "AoÃ»t",
                     "Septembre",
                     "Octobre",
                     "Novembre",
-                    "Décembre"
+                    "DÃ©cembre"
                 ]
             }
 
             static get monthInitials() {
                 return [
                     "Janv",
-                    "Févr",
+                    "FÃ©vr",
                     "Mars",
                     "Avril",
                     "Mai",
@@ -965,7 +1066,7 @@ class DateNames {
                     "Sept",
                     "Oct",
                     "Nov",
-                    "Déc"
+                    "DÃ©c"
                 ]
             }
         }
@@ -978,10 +1079,10 @@ class DateNames {
                     "Domingo",
                     "Lunes",
                     "Martes",
-                    "Miércules",
+                    "MiÃ©rcules",
                     "Jueves",
                     "Viernes",
-                    "Sábado"
+                    "SÃ¡bado"
                 ]
             }
 
@@ -1039,11 +1140,11 @@ class DateNames {
                 return [
                     "Domingo",
                     "Segunda-feira",
-                    "Terça-feira",
+                    "TerÃ§a-feira",
                     "Quarta-feira",
                     "Quinta-feira",
                     "Sexta-feira",
-                    "Sábado"
+                    "SÃ¡bado"
                 ]
             }
 
@@ -1063,7 +1164,7 @@ class DateNames {
                 return [
                     "Janeiro",
                     "Fevereiro",
-                    "Março",
+                    "MarÃ§o",
                     "Abril",
                     "Maio",
                     "Junho",
@@ -1095,3 +1196,5 @@ class DateNames {
         }
     }
 }
+
+window.DateTime = DateTime
